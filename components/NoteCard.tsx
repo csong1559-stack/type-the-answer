@@ -28,9 +28,6 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
       <div className="w-full max-w-[62ch] mx-auto">
         <div className="flex justify-between items-end border-b-4 border-gray-800 pb-6 mb-10">
           <div className="flex flex-col">
-            <span className="font-typewriter text-xs sm:text-sm uppercase tracking-[0.2em] text-gray-500 mb-1">
-              年度40问
-            </span>
             <span className="font-typewriter text-2xl sm:text-3xl font-bold text-gray-800">
               {title}
             </span>
@@ -39,13 +36,13 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
 
         <div className="flex-1 flex flex-col">
           <div className="mb-8">
-            <p className="font-typewriter text-gray-500 text-sm sm:text-base italic mb-2">
+            <p className="font-typewriter text-gray-500 text-sm sm:text-base not-italic mb-2">
               问：{question.text}
             </p>
           </div>
 
           <div className="flex-1 relative">
-            <p className="font-typewriter text-lg sm:text-xl md:text-2xl leading-loose whitespace-pre-wrap text-gray-900 font-medium">
+            <p className="font-typewriter text-lg sm:text-xl md:text-2xl leading-loose whitespace-pre-wrap text-gray-900 font-normal">
               {answer}
             </p>
           </div>

@@ -9,6 +9,7 @@ export const CARD_DIMENSIONS = {
 export const LOCAL_STORAGE_KEYS = {
   MUTE_PREF: 'yearly_typewriter_muted',
   ANSWER_DRAFT: 'yearly_typewriter_draft',
+  APP_ROUTE: 'yearly_typewriter_route',
 };
 
 export const PAPER_TEXTURE_URL =
