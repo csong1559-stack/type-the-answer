@@ -20,7 +20,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
   return (
     <div 
       ref={ref}
-      className={`relative bg-paper text-gray-900 flex flex-col p-8 sm:p-12 shadow-2xl ${aspectClass}`}
+      className={`relative bg-paper text-gray-900 flex flex-col p-8 sm:p-12 shadow-2xl font-typewriter ${aspectClass}`}
       style={{
         boxSizing: 'border-box'
       }}

@@ -8,6 +8,7 @@ import { NoteCard } from './components/NoteCard';
 import { exportToPNG } from './platform/save';
 import { QuestionsModal } from './components/QuestionsModal';
 import { fetchQuestions } from './services/questions';
+import { supabase } from './lib/supabase';
 
 const App: React.FC = () => {
   // --- State ---
@@ -23,6 +24,10 @@ const App: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>(QUESTIONS);
   const [answersById, setAnswersById] = useState<Record<string, string>>({});
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showContact, setShowContact] = useState<boolean>(false);
+  const [contactUrl, setContactUrl] = useState<string | undefined>(undefined);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportToast, setExportToast] = useState<string | null>(null);
   
   // Refs
   const cardRef = useRef<HTMLDivElement>(null);
@@ -101,6 +106,7 @@ const App: React.FC = () => {
   const toggleMute = () => setIsMuted(!isMuted);
 
   const handleExport = async () => {
+    setIsExporting(true);
     const nodeToExport =
       selectedIds.length > 0 ? compositeRef.current : cardRef.current;
     if (!nodeToExport) return;
@@ -109,7 +115,23 @@ const App: React.FC = () => {
         ? `Selected_${new Date().getFullYear()}_${selectedIds.length}items`
         : questions[qIndex].text.substring(0, 10).replace(/[^a-z0-9]/gi, '_');
     const filename = `YearlyNote_${new Date().getFullYear()}_${title}`;
-    await exportToPNG(nodeToExport, filename);
+    try {
+      await exportToPNG(nodeToExport, filename);
+      setExportToast('保存成功');
+      setTimeout(() => setExportToast(null), 2000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+  const openContact = async () => {
+    try {
+      const { data } = supabase.storage.from('public-contact').getPublicUrl('wechat-contact.jpg');
+      setContactUrl(data?.publicUrl);
+    } catch {
+      setContactUrl(undefined);
+    } finally {
+      setShowContact(true);
+    }
   };
   
   const compositeRef = useRef<HTMLDivElement | null>(null);
@@ -126,7 +148,7 @@ const App: React.FC = () => {
   // --- Views ---
 
   const renderHome = () => (
-    <div className="flex flex-col items-center justify-center h-full p-8 bg-paper text-center">
+    <div className="relative flex flex-col items-center justify-center h-full p-8 bg-paper text-center">
       <div className="mb-8">
         <h1 className="font-typewriter text-4xl font-bold mb-4 tracking-tighter text-gray-800">
           好问题值得<br/>更好的答案
@@ -144,6 +166,9 @@ const App: React.FC = () => {
         <div className="absolute inset-0 h-full w-full border-2 border-gray-900 translate-x-1 translate-y-1 -z-10 transition-transform group-hover:translate-x-0 group-hover:translate-y-0 bg-white"></div>
       </button>
 
+      <div className="absolute bottom-3 right-3 text-xs text-gray-600 font-typewriter">
+        vibe coded by 聪明盖
+      </div>
     </div>
   );
 
@@ -218,16 +243,17 @@ const App: React.FC = () => {
         <button onClick={() => setRoute('EDITOR')} className="text-gray-600 font-typewriter text-sm">
           &larr; 返回编辑
         </button>
-        <span className="font-typewriter font-bold text-gray-800">预览</span>
-        <div className="w-10"></div> {/* Spacer */}
+        <button onClick={openContact} className="text-gray-600 font-typewriter text-sm">
+          谁是聪明盖？
+        </button>
       </div>
 
       {/* Preview Area */}
-      <div className="flex-1 p-6 flex items-center justify-center bg-gray-200/50 overflow-y-auto">
+      <div className="flex-1 p-6 bg-gray-200/50 overflow-y-auto">
         {selectedIds.length > 0 ? (
           <div
             ref={compositeRef}
-            className="relative bg-paper text-gray-900 flex flex-col p-10 sm:p-14 shadow-2xl"
+            className="relative bg-paper text-gray-900 flex flex-col p-10 sm:p-14 shadow-2xl font-typewriter"
             style={{ boxSizing: 'border-box' }}
           >
             <div className="w-full max-w-[62ch] mx-auto">
@@ -318,6 +344,34 @@ const App: React.FC = () => {
           </button>
         </div>
       </div>
+      {showContact && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white p-4 rounded-none shadow-2xl w-1/2">
+            <div className="flex justify-between items-center mb-3">
+              <div className="font-typewriter text-sm text-gray-700">微信联系</div>
+              <button onClick={() => setShowContact(false)} className="text-gray-500 font-typewriter text-sm">关闭</button>
+            </div>
+            {contactUrl ? (
+              <img src={contactUrl} alt="wechat-contact" className="w-full h-auto" />
+            ) : (
+              <div className="font-typewriter text-sm text-gray-500">未获取到联系卡片</div>
+            )}
+          </div>
+        </div>
+      )}
+      {isExporting && (
+        <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center">
+          <div className="bg-white px-4 py-3 shadow font-typewriter text-sm text-gray-700 flex items-center gap-2">
+            <div className="h-4 w-4 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin"></div>
+            <span>正在生成图片...</span>
+          </div>
+        </div>
+      )}
+      {exportToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-gray-900 text-white px-4 py-2 rounded-none shadow font-typewriter text-sm">
+          {exportToast}
+        </div>
+      )}
     </div>
   );
 

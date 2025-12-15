@@ -4,14 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3000 --strictPort=false",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --port 3000 --strictPort=false"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.87.1",
     "html-to-image": "^1.11.13",
-    "jspdf": "^3.0.4",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },

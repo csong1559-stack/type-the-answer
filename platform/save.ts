@@ -1,5 +1,4 @@
 import * as htmlToImage from 'html-to-image';
-import jsPDF from 'jspdf';
 import { isCapacitor } from './platform';
 
 export const exportToPNG = async (
@@ -11,14 +10,30 @@ export const exportToPNG = async (
   document.body.classList.add('is-exporting');
 
   try {
-    const rect = node.getBoundingClientRect();
-    const targetWidth = opts?.width ?? Math.ceil(rect.width);
-    const targetHeight = opts?.height ?? Math.ceil(rect.height);
+    // Ensure web fonts are loaded to keep layout identical to preview
+    const fontsAny = (document as any).fonts;
+    if (fontsAny?.ready) {
+      try { 
+        await fontsAny.ready; 
+        try {
+          await Promise.all([
+            fontsAny.load('16px "Huiwen-mincho"'),
+          ]);
+        } catch {}
+      } catch {}
+    }
+
+    // Use scroll dimensions to capture full content, not just visible box
+    const targetWidth = opts?.width ?? Math.ceil(node.scrollWidth || node.getBoundingClientRect().width);
+    const targetHeight = opts?.height ?? Math.ceil(node.scrollHeight || node.getBoundingClientRect().height);
+
+    // Dynamic pixel ratio for mobile memory constraints while preserving clarity
+    const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
     const dataUrl = await htmlToImage.toPng(node, {
-      quality: 0.95,
-      pixelRatio: 3,
+      quality: 0.92,
+      pixelRatio: dpr,
       backgroundColor: '#fdfbf7',
-      skipFonts: true,
+      skipFonts: false,
       width: targetWidth,
       height: targetHeight,
       style: {
@@ -26,6 +41,7 @@ export const exportToPNG = async (
         maxHeight: 'none',
         display: 'block',
         margin: '0',
+        fontFamily: '"Huiwen-mincho",monospace',
         position: 'relative',
         boxSizing: 'border-box',
         transform: 'none',
@@ -40,10 +56,10 @@ export const exportToPNG = async (
       // const result = await Filesystem.writeFile(...)
       console.log('Capacitor save logic would go here');
     } else {
-      // Web Download
       const link = document.createElement('a');
       link.download = `${fileName}.png`;
       link.href = dataUrl;
+      link.rel = 'noopener';
       link.click();
     }
   } catch (err) {
@@ -54,41 +70,4 @@ export const exportToPNG = async (
   }
 };
 
-export const exportToPDF = async (node: HTMLElement, fileName: string): Promise<void> => {
-  document.body.classList.add('is-exporting');
 
-  try {
-    const dataUrl = await htmlToImage.toPng(node, {
-      quality: 0.95,
-      pixelRatio: 2,
-      skipFonts: true,
-    } as any);
-
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    const imgProps = pdf.getImageProperties(dataUrl);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    
-    // Logic to center image and fit within margins
-    const margin = 20;
-    const maxContentWidth = pdfWidth - (margin * 2);
-    const ratio = maxContentWidth / imgProps.width;
-    const finalHeight = imgProps.height * ratio;
-
-    const yPos = (pdfHeight - finalHeight) / 2;
-
-    pdf.addImage(dataUrl, 'PNG', margin, yPos, maxContentWidth, finalHeight);
-    pdf.save(`${fileName}.pdf`);
-
-  } catch (err) {
-    console.error('PDF Export failed', err);
-    alert('Failed to generate PDF.');
-  } finally {
-    document.body.classList.remove('is-exporting');
-  }
-};

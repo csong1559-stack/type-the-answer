@@ -11,10 +11,46 @@
     <link rel="stylesheet" href="https://fontsapi.zeoseven.com/256/main/result.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
     <style>
+      /* Self-hosted font faces on Supabase (will fallback to external links above if unavailable) */
+      @font-face {
+        font-family: 'Huiwen-mincho';
+        src: url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huiwenmingchao-font.ttf') format('truetype');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Noto Serif SC';
+        src: url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/NotoSerifSC-Regular.woff2') format('woff2');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Noto Serif SC';
+        src: url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/NotoSerifSC-Bold.woff2') format('woff2');
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Courier Prime';
+        src: url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/CourierPrime-Regular.woff2') format('woff2');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Courier Prime';
+        src: url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/CourierPrime-Bold.woff2') format('woff2');
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
       /* Custom Typewriter Utilities */
       *, ::before, ::after { border-radius: 0 !important; }
       body {
-        font-family: 'Huiwen-mincho', 'Noto Serif SC', 'Courier Prime', monospace;
+        font-family: 'Huiwen-mincho', monospace;
         background-color: #1a1a1a; /* Dark Machine/Desk Background */
         color: #f3f4f6;
         -webkit-font-smoothing: antialiased;
@@ -22,7 +58,7 @@
       }
       
       .font-typewriter {
-        font-family: 'Huiwen-mincho', 'Noto Serif SC', 'Courier Prime', monospace;
+        font-family: 'Huiwen-mincho', monospace;
       }
 
       /* Cursor Blink Animation */
@@ -62,11 +98,10 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
       }
-    </style>
+  </style>
   <script type="importmap">
 {
   "imports": {
-    "jspdf": "https://esm.sh/jspdf@^3.0.4",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",

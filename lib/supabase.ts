@@ -13,6 +13,7 @@ const createShim = () => {
     storage: {
       from: (_bucket: string) => ({
         getPublicUrl: (_path: string) => ({ data: { publicUrl: undefined }, error: null as any }),
+        list: async (_path?: string, _options?: any) => ({ data: [] as any[], error: null as any }),
       }),
     },
     from: (_table: string) => chain,
