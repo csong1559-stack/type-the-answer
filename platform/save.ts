@@ -2,16 +2,33 @@ import * as htmlToImage from 'html-to-image';
 import jsPDF from 'jspdf';
 import { isCapacitor } from './platform';
 
-export const exportToPNG = async (node: HTMLElement, fileName: string): Promise<void> => {
+export const exportToPNG = async (
+  node: HTMLElement,
+  fileName: string,
+  opts?: { width?: number; height?: number }
+): Promise<void> => {
   // Pre-export cleanup
   document.body.classList.add('is-exporting');
 
   try {
     const dataUrl = await htmlToImage.toPng(node, {
       quality: 0.95,
-      pixelRatio: 3, // High Res
-      backgroundColor: '#fdfbf7', // Ensure paper background
-    });
+      pixelRatio: 3,
+      backgroundColor: '#fdfbf7',
+      skipFonts: true,
+      width: opts?.width,
+      height: opts?.height,
+      style: {
+        width: opts?.width ? `${opts.width}px` : undefined,
+        height: opts?.height ? `${opts.height}px` : undefined,
+        maxWidth: 'none',
+        maxHeight: 'none',
+        display: 'block',
+        margin: '0',
+        position: 'relative',
+        boxSizing: 'border-box',
+      },
+    } as any);
 
     if (isCapacitor()) {
       // TODO: Implement Capacitor Filesystem/Media write logic here
@@ -39,7 +56,8 @@ export const exportToPDF = async (node: HTMLElement, fileName: string): Promise<
     const dataUrl = await htmlToImage.toPng(node, {
       quality: 0.95,
       pixelRatio: 2,
-    });
+      skipFonts: true,
+    } as any);
 
     const pdf = new jsPDF({
       orientation: 'portrait',

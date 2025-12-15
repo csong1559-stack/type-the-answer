@@ -9,10 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.87.1",
+    "html-to-image": "^1.11.13",
     "jspdf": "^3.0.4",
-    "react-dom": "^19.2.3",
     "react": "^19.2.3",
-    "html-to-image": "^1.11.13"
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

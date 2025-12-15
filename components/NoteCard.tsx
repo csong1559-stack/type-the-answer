@@ -29,16 +29,11 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
       <div className="flex justify-between items-end border-b-4 border-gray-800 pb-4 mb-8">
         <div className="flex flex-col">
           <span className="font-typewriter text-xs sm:text-sm uppercase tracking-[0.2em] text-gray-500 mb-1">
-            Yearly Reflection
+            年度40问
           </span>
           <span className="font-typewriter text-2xl sm:text-3xl font-bold text-gray-800">
             {year}
           </span>
-        </div>
-        <div className="text-gray-400">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-             <path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
-          </svg>
         </div>
       </div>
 
@@ -47,7 +42,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
         {/* Question */}
         <div className="mb-6">
           <p className="font-typewriter text-gray-500 text-sm sm:text-base italic mb-2">
-            Q: {question.text}
+            问：{question.text}
           </p>
         </div>
 
@@ -62,7 +57,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
       {/* Footer / Branding */}
       <div className="mt-8 pt-4 border-t border-gray-300 flex justify-between items-center opacity-60">
         <span className="font-typewriter text-xs text-gray-500">
-          Typewriter Notes
+          Type the Answer
         </span>
         <span className="font-typewriter text-xs text-gray-400">
           {new Date().toLocaleDateString()}

@@ -9,3 +9,6 @@ export const LOCAL_STORAGE_KEYS = {
   MUTE_PREF: 'yearly_typewriter_muted',
   ANSWER_DRAFT: 'yearly_typewriter_draft',
 };
+
+export const PAPER_TEXTURE_URL =
+  'https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/paper-texture/paper-texture.jpg';
