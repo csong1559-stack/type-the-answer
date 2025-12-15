@@ -18,9 +18,11 @@ const App: React.FC = () => {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.MUTE_PREF);
     return saved ? JSON.parse(saved) : false;
   });
-  const [sizePreset, setSizePreset] = useState<NoteCardSize>('SQUARE');
+  const [sizePreset, setSizePreset] = useState<NoteCardSize>('THREE_FOUR');
   const [showQuestions, setShowQuestions] = useState<boolean>(false);
   const [questions, setQuestions] = useState<Question[]>(QUESTIONS);
+  const [answersById, setAnswersById] = useState<Record<string, string>>({});
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   
   // Refs
   const cardRef = useRef<HTMLDivElement>(null);
@@ -41,6 +43,16 @@ const App: React.FC = () => {
   }, [answer, route]);
 
   useEffect(() => {
+    const q = questions[qIndex];
+    if (q) {
+      setAnswersById((prev) => {
+        if (prev[q.id] === answer) return prev;
+        return { ...prev, [q.id]: answer };
+      });
+    }
+  }, [answer, qIndex, questions]);
+
+  useEffect(() => {
     (async () => {
       try {
         const remote = await fetchQuestions();
@@ -52,6 +64,14 @@ const App: React.FC = () => {
     })();
   }, []);
 
+  useEffect(() => {
+    if (route === 'EXPORT') {
+      const answered = Object.entries(answersById)
+        .filter(([, v]) => typeof v === 'string' && v.trim().length > 0)
+        .map(([id]) => id);
+      setSelectedIds(answered);
+    }
+  }, [route, answersById]);
   
 
   // --- Handlers ---
@@ -60,30 +80,44 @@ const App: React.FC = () => {
     // Pick random question if fresh start, otherwise keep 0
     const randomIndex = Math.floor(Math.random() * questions.length);
     setQIndex(randomIndex);
+    const nextId = questions[randomIndex]?.id;
+    setAnswer(nextId ? (answersById[nextId] ?? '') : '');
     setRoute('EDITOR');
   };
 
   const handleNextQuestion = () => {
-    setQIndex((prev) => (prev + 1) % questions.length);
-    setAnswer('');
+    const next = (qIndex + 1) % questions.length;
+    setQIndex(next);
+    const nextId = questions[next]?.id;
+    setAnswer(nextId ? (answersById[nextId] ?? '') : '');
   };
   const handlePrevQuestion = () => {
-    setQIndex((prev) => (prev - 1 + questions.length) % questions.length);
-    setAnswer('');
+    const prev = (qIndex - 1 + questions.length) % questions.length;
+    setQIndex(prev);
+    const prevId = questions[prev]?.id;
+    setAnswer(prevId ? (answersById[prevId] ?? '') : '');
   };
 
   const toggleMute = () => setIsMuted(!isMuted);
 
   const handleExport = async () => {
-    if (!cardRef.current) return;
-    
-    const q = questions[qIndex];
-    // Sanitize filename
-    const safeQ = q.text.substring(0, 10).replace(/[^a-z0-9]/gi, '_');
-    const filename = `YearlyNote_${new Date().getFullYear()}_${safeQ}`;
-
-    const dims = CARD_DIMENSIONS[sizePreset];
-    await exportToPNG(cardRef.current, filename, { width: dims.width, height: dims.height });
+    const nodeToExport =
+      selectedIds.length > 0 ? compositeRef.current : cardRef.current;
+    if (!nodeToExport) return;
+    const title =
+      selectedIds.length > 0
+        ? `Selected_${new Date().getFullYear()}_${selectedIds.length}items`
+        : questions[qIndex].text.substring(0, 10).replace(/[^a-z0-9]/gi, '_');
+    const filename = `YearlyNote_${new Date().getFullYear()}_${title}`;
+    await exportToPNG(nodeToExport, filename);
+  };
+  
+  const compositeRef = useRef<HTMLDivElement | null>(null);
+  const answeredIds = Object.entries(answersById)
+    .filter(([, v]) => typeof v === 'string' && v.trim().length > 0)
+    .map(([id]) => id);
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   // --- Render Helpers ---
@@ -110,9 +144,6 @@ const App: React.FC = () => {
         <div className="absolute inset-0 h-full w-full border-2 border-gray-900 translate-x-1 translate-y-1 -z-10 transition-transform group-hover:translate-x-0 group-hover:translate-y-0 bg-white"></div>
       </button>
 
-      <div className="mt-12 absolute top-4 right-4">
-        <MuteButton isMuted={isMuted} toggle={toggleMute} />
-      </div>
     </div>
   );
 
@@ -124,10 +155,7 @@ const App: React.FC = () => {
           &larr; 返回首页
         </button>
         <div className="text-gray-500 text-xs tracking-widest uppercase">Type the Answer</div>
-        <button onClick={handleNextQuestion} className="flex items-center space-x-1 text-gray-400 hover:text-white transition-colors">
-          <span className="font-typewriter text-xs uppercase tracking-wide">换一题</span>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-        </button>
+        <div className="w-10"></div>
       </div>
 
       {/* Main Stage (Scrollable) */}
@@ -159,25 +187,25 @@ const App: React.FC = () => {
       
 
       {/* Bottom Action Bar (Styled like Typewriter Keys/Body) */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 pb-safe flex items-center justify-end gap-4 z-40">
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md p-4 pb-safe grid grid-cols-3 items-center gap-4 z-40">
         <button 
           onClick={handlePrevQuestion} 
-          className="font-typewriter text-sm text-gray-500 uppercase tracking-widest px-4 py-3 bg-transparent border border-transparent transition-all"
+          className="justify-self-start font-typewriter text-sm text-gray-500 uppercase tracking-widest px-4 py-3 bg-transparent border border-transparent transition-all"
         >
           上一题
         </button>
         <button 
-          onClick={handleNextQuestion} 
-          className="font-typewriter text-sm text-gray-500 uppercase tracking-widest px-4 py-3 bg-transparent border border-transparent transition-all"
-        >
-          下一题
-        </button>
-        <button 
           onClick={() => setRoute('EXPORT')}
-          disabled={!answer.trim()}
-          className="font-typewriter text-sm text-gray-500 uppercase tracking-widest px-4 py-3 bg-transparent border border-transparent transition-all disabled:opacity-40"
+          disabled={answeredIds.length === 0}
+          className="justify-self-center font-typewriter text-sm text-gray-500 uppercase tracking-widest px-4 py-3 bg-transparent border border-transparent transition-all disabled:opacity-40"
         >
           回答完毕
+        </button>
+        <button 
+          onClick={handleNextQuestion} 
+          className="justify-self-end font-typewriter text-sm text-gray-500 uppercase tracking-widest px-4 py-3 bg-transparent border border-transparent transition-all"
+        >
+          下一题
         </button>
       </div>
     </div>
@@ -196,33 +224,88 @@ const App: React.FC = () => {
 
       {/* Preview Area */}
       <div className="flex-1 p-6 flex items-center justify-center bg-gray-200/50 overflow-y-auto">
-        <div className="transform scale-90 sm:scale-100 shadow-2xl origin-top sm:origin-center">
-          <NoteCard 
-            ref={cardRef}
-            question={currentQuestion}
-            answer={answer}
-            year={new Date().getFullYear()}
-            size={sizePreset}
-          />
-        </div>
+        {selectedIds.length > 0 ? (
+          <div
+            ref={compositeRef}
+            className="relative bg-paper text-gray-900 flex flex-col p-10 sm:p-14 shadow-2xl"
+            style={{ boxSizing: 'border-box' }}
+          >
+            <div className="w-full max-w-[62ch] mx-auto">
+              <div className="flex justify-between items-end border-b-4 border-gray-800 pb-6 mb-10">
+                <div className="flex flex-col">
+                  <span className="font-typewriter text-xs sm:text-sm uppercase tracking-[0.2em] text-gray-500 mb-1">
+                  </span>
+                  <span className="font-typewriter text-2xl sm:text-3xl font-bold text-gray-800">
+                    年度40问
+                  </span>
+                </div>
+              </div>
+              <div className="flex-1 flex flex-col space-y-10">
+                {selectedIds.map((id) => {
+                  const q = questions.find((qq) => qq.id === id);
+                  if (!q) return null;
+                  const ans = answersById[id] ?? '';
+                  return (
+                    <div key={id} className="relative">
+                      <div className="mb-4">
+                        <p className="font-typewriter text-gray-500 text-sm sm:text-base italic">
+                          问：{q.text}
+                        </p>
+                      </div>
+                      <p className="font-typewriter text-lg sm:text-xl md:text-2xl leading-loose whitespace-pre-wrap text-gray-900 font-medium">
+                        {ans}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-12 pt-6 border-t border-gray-300 flex justify-between items-center opacity-60">
+                <span className="font-typewriter text-xs text-gray-500">Type the Answer</span>
+                <span className="font-typewriter text-xs text-gray-400">
+                  {new Date().toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="transform scale-90 sm:scale-100 shadow-2xl origin-top sm:origin-center">
+            <NoteCard 
+              ref={cardRef}
+              question={currentQuestion}
+              answer={answer}
+              title={'年度40问'}
+              size={sizePreset}
+            />
+          </div>
+        )}
       </div>
 
       {/* Bottom Drawer */}
       <div className="bg-white border-t border-gray-200 p-6 pb-safe space-y-6 z-30">
         
-        {/* Size Picker */}
-        <div className="flex justify-center items-center space-x-4">
-           {(['SQUARE', 'PORTRAIT'] as NoteCardSize[]).map((s) => (
-             <button 
-               key={s}
-               onClick={() => setSizePreset(s)}
-               className={`flex flex-col items-center space-y-2 group ${sizePreset === s ? 'opacity-100' : 'opacity-50 hover:opacity-80'}`}
-             >
-               <div className="h-14 flex items-center justify-center">
-                <div className={`border-2 ${sizePreset === s ? 'border-gray-900 bg-gray-100' : 'border-gray-300'} w-10 ${s === 'SQUARE' ? 'h-10' : 'h-14'} transition-all`}></div>
-               </div>
-             </button>
-           ))}
+
+        {/* Select questions to export */}
+        <div>
+          <div className="font-typewriter text-xs text-gray-500 uppercase tracking-widest mb-2">选择要导出的题目</div>
+          <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
+            {answeredIds.map((id) => {
+              const q = questions.find((qq) => qq.id === id);
+              if (!q) return null;
+              return (
+                <label key={id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(id)}
+                    onChange={() => toggleSelect(id)}
+                  />
+                  <span className="font-typewriter text-sm text-gray-700">{q.text}</span>
+                </label>
+              );
+            })}
+            {answeredIds.length === 0 && (
+              <div className="font-typewriter text-sm text-gray-400">暂无已回答的题目</div>
+            )}
+          </div>
         </div>
 
         {/* Actions */}
@@ -246,20 +329,5 @@ const App: React.FC = () => {
     </div>
   );
 };
-
-const MuteButton = ({ isMuted, toggle }: { isMuted: boolean, toggle: () => void }) => (
-  <button onClick={toggle} className="p-2 bg-white/50 backdrop-blur hover:bg-white transition-colors">
-    {isMuted ? (
-       <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-       </svg>
-    ) : (
-      <svg className="w-6 h-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-      </svg>
-    )}
-  </button>
-);
 
 export default App;

@@ -5,7 +5,7 @@ export interface Question {
 
 export type AppRoute = 'HOME' | 'EDITOR' | 'EXPORT';
 
-export type NoteCardSize = 'SQUARE' | 'PORTRAIT';
+export type NoteCardSize = 'SQUARE' | 'PORTRAIT' | 'THREE_FOUR';
 
 export interface AppState {
   currentRoute: AppRoute;

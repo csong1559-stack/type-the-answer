@@ -3,6 +3,7 @@ export const APP_VERSION = '1.0.0';
 export const CARD_DIMENSIONS = {
   SQUARE: { width: 1080, height: 1080, aspectClass: 'aspect-square' },
   PORTRAIT: { width: 1080, height: 1350, aspectClass: 'aspect-[4/5]' },
+  THREE_FOUR: { width: 1080, height: 1440, aspectClass: 'aspect-[3/4]' },
 };
 
 export const LOCAL_STORAGE_KEYS = {

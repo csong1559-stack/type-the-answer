@@ -11,22 +11,27 @@ export const exportToPNG = async (
   document.body.classList.add('is-exporting');
 
   try {
+    const rect = node.getBoundingClientRect();
+    const targetWidth = opts?.width ?? Math.ceil(rect.width);
+    const targetHeight = opts?.height ?? Math.ceil(rect.height);
     const dataUrl = await htmlToImage.toPng(node, {
       quality: 0.95,
       pixelRatio: 3,
       backgroundColor: '#fdfbf7',
       skipFonts: true,
-      width: opts?.width,
-      height: opts?.height,
+      width: targetWidth,
+      height: targetHeight,
       style: {
-        width: opts?.width ? `${opts.width}px` : undefined,
-        height: opts?.height ? `${opts.height}px` : undefined,
         maxWidth: 'none',
         maxHeight: 'none',
         display: 'block',
         margin: '0',
         position: 'relative',
         boxSizing: 'border-box',
+        transform: 'none',
+        left: '0',
+        top: '0',
+        overflow: 'visible',
       },
     } as any);
 

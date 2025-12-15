@@ -5,14 +5,14 @@ import { CARD_DIMENSIONS } from '../constants';
 interface NoteCardProps {
   question: Question;
   answer: string;
-  year: number;
+  title: string;
   size: NoteCardSize;
 }
 
 export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({ 
   question, 
   answer, 
-  year,
+  title,
   size 
 }, ref) => {
   const aspectClass = CARD_DIMENSIONS[size].aspectClass;
@@ -20,48 +20,45 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
   return (
     <div 
       ref={ref}
-      className={`relative bg-paper text-gray-900 flex flex-col p-8 sm:p-12 shadow-2xl mx-auto w-full max-w-md ${aspectClass}`}
+      className={`relative bg-paper text-gray-900 flex flex-col p-8 sm:p-12 shadow-2xl ${aspectClass}`}
       style={{
         boxSizing: 'border-box'
       }}
     >
-      {/* Header */}
-      <div className="flex justify-between items-end border-b-4 border-gray-800 pb-4 mb-8">
-        <div className="flex flex-col">
-          <span className="font-typewriter text-xs sm:text-sm uppercase tracking-[0.2em] text-gray-500 mb-1">
-            年度40问
+      <div className="w-full max-w-[62ch] mx-auto">
+        <div className="flex justify-between items-end border-b-4 border-gray-800 pb-6 mb-10">
+          <div className="flex flex-col">
+            <span className="font-typewriter text-xs sm:text-sm uppercase tracking-[0.2em] text-gray-500 mb-1">
+              年度40问
+            </span>
+            <span className="font-typewriter text-2xl sm:text-3xl font-bold text-gray-800">
+              {title}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex-1 flex flex-col">
+          <div className="mb-8">
+            <p className="font-typewriter text-gray-500 text-sm sm:text-base italic mb-2">
+              问：{question.text}
+            </p>
+          </div>
+
+          <div className="flex-1 relative">
+            <p className="font-typewriter text-lg sm:text-xl md:text-2xl leading-loose whitespace-pre-wrap text-gray-900 font-medium">
+              {answer}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-10 pt-6 border-t border-gray-300 flex justify-between items-center opacity-60">
+          <span className="font-typewriter text-xs text-gray-500">
+            Type the Answer
           </span>
-          <span className="font-typewriter text-2xl sm:text-3xl font-bold text-gray-800">
-            {year}
+          <span className="font-typewriter text-xs text-gray-400">
+            {new Date().toLocaleDateString()}
           </span>
         </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Question */}
-        <div className="mb-6">
-          <p className="font-typewriter text-gray-500 text-sm sm:text-base italic mb-2">
-            问：{question.text}
-          </p>
-        </div>
-
-        {/* Answer */}
-        <div className="flex-1 relative">
-           <p className="font-typewriter text-lg sm:text-xl md:text-2xl leading-relaxed whitespace-pre-wrap text-gray-900 font-medium">
-             {answer}
-           </p>
-        </div>
-      </div>
-
-      {/* Footer / Branding */}
-      <div className="mt-8 pt-4 border-t border-gray-300 flex justify-between items-center opacity-60">
-        <span className="font-typewriter text-xs text-gray-500">
-          Type the Answer
-        </span>
-        <span className="font-typewriter text-xs text-gray-400">
-          {new Date().toLocaleDateString()}
-        </span>
       </div>
       
       {/* Decorative Texture Overlay (Grain) */}
