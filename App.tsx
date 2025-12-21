@@ -5,6 +5,7 @@ import { LOCAL_STORAGE_KEYS, CARD_DIMENSIONS } from './constants';
 import { useAudioSfx } from './hooks/useAudioSfx';
 import { TypewriterStage } from './components/TypewriterStage';
 import { NoteCard } from './components/NoteCard';
+import { exportToPNG } from './platform/save';
 import { QuestionsModal } from './components/QuestionsModal';
 import { fetchQuestions } from './services/questions';
 import { supabase } from './lib/supabase';
@@ -28,6 +29,8 @@ const App: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showContact, setShowContact] = useState<boolean>(false);
   const [contactUrl, setContactUrl] = useState<string | undefined>(undefined);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportToast, setExportToast] = useState<string | null>(null);
   
   // Refs
   const cardRef = useRef<HTMLDivElement>(null);
@@ -108,6 +111,32 @@ const App: React.FC = () => {
 
   const toggleMute = () => setIsMuted(!isMuted);
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    const nodeToExport =
+      selectedIds.length > 0 ? compositeRef.current : cardRef.current;
+    if (!nodeToExport) return;
+    const title =
+      selectedIds.length > 0
+        ? `Selected_${new Date().getFullYear()}_${selectedIds.length}items`
+        : questions[qIndex].text.substring(0, 10).replace(/[^a-z0-9]/gi, '_');
+    const filename = `YearlyNote_${new Date().getFullYear()}_${title}`;
+    try {
+      const result = await exportToPNG(nodeToExport, filename);
+      const objectUrl = URL.createObjectURL(result.blob);
+      const link = document.createElement('a');
+      link.download = result.fileName;
+      link.href = objectUrl;
+      link.target = '_self';
+      link.rel = 'noopener';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+      setExportToast('图片已下载');
+      setTimeout(() => setExportToast(null), 2000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
   const openContact = async () => {
     try {
       const { data } = supabase.storage.from('public-contact').getPublicUrl('wechat-contact.jpg');
@@ -297,7 +326,7 @@ const App: React.FC = () => {
 
         {/* Select questions to export */}
         <div>
-          <div className="font-typewriter text-xs text-gray-500 uppercase tracking-widest mb-2">选择你的答案</div>
+          <div className="font-typewriter text-xs text-gray-500 uppercase tracking-widest mb-2">选择要导出的题目</div>
           <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
             {answeredIds.map((id) => {
               const q = questions.find((qq) => qq.id === id);
@@ -319,7 +348,15 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        
+        {/* Actions */}
+        <div className="grid grid-cols-2 gap-4">
+          <button 
+            onClick={handleExport}
+            className="col-span-2 bg-gray-900 text-white py-3 px-4 font-typewriter font-bold text-sm uppercase tracking-wide shadow-md active:bg-gray-800"
+          >
+            保存图片
+          </button>
+        </div>
       </div>
       {showContact && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -334,6 +371,19 @@ const App: React.FC = () => {
               <div className="font-typewriter text-sm text-gray-500">未获取到联系卡片</div>
             )}
           </div>
+        </div>
+      )}
+      {isExporting && (
+        <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center">
+          <div className="bg-white px-4 py-3 shadow font-typewriter text-sm text-gray-700 flex items-center gap-2">
+            <div className="h-4 w-4 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin"></div>
+            <span>正在生成图片...</span>
+          </div>
+        </div>
+      )}
+      {exportToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-gray-900 text-white px-4 py-2 rounded-none shadow font-typewriter text-sm">
+          {exportToast}
         </div>
       )}
     </div>

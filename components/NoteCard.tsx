@@ -28,7 +28,10 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
       <div className="w-full max-w-[62ch] mx-auto">
         <div className="flex justify-between items-end border-b-4 border-gray-800 pb-6 mb-10">
           <div className="flex flex-col">
-            <span className="font-typewriter text-2xl sm:text-3xl font-bold text-gray-800">
+            <span className="font-typewriter text-xs sm:text-sm uppercase tracking-[0.2em] text-gray-500 mb-1">
+              年度40问
+            </span>
+            <span className="font-typewriter text-2xl sm:text-3xl font-normal text-gray-800">
               {title}
             </span>
           </div>

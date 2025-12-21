@@ -5,47 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Type the Answer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preload" as="font" href="https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huiwenmingchao-font.ttf" crossorigin>
+    <link rel="preload" as="font" href="/fonts/huiwenmingchao-font.ttf" crossorigin>
     <style>
       /* Self-hosted font faces on Supabase (will fallback to external links above if unavailable) */
       @font-face {
         font-family: 'Huiwen-mincho';
-        src: url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huiwenmingchao-font.ttf') format('truetype'),
-             url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huimingwenchao-font.ttf') format('truetype');
+        src: url('/fonts/huiwenmingchao-font.ttf') format('truetype');
         font-weight: 400;
         font-style: normal;
-        font-display: block;
-      }
-      @font-face {
-        font-family: 'Huiwen-mincho';
-        src: url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huiwenmingchao-font.ttf') format('truetype'),
-             url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huimingwenchao-font.ttf') format('truetype');
-        font-weight: 500;
-        font-style: normal;
-        font-display: block;
-      }
-      @font-face {
-        font-family: 'Huiwen-mincho';
-        src: url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huiwenmingchao-font.ttf') format('truetype'),
-             url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huimingwenchao-font.ttf') format('truetype');
-        font-weight: 700;
-        font-style: normal;
-        font-display: block;
-      }
-      @font-face {
-        font-family: 'Huiwen-mincho';
-        src: url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huiwenmingchao-font.ttf') format('truetype'),
-             url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huimingwenchao-font.ttf') format('truetype');
-        font-weight: 400;
-        font-style: italic;
-        font-display: block;
-      }
-      @font-face {
-        font-family: 'Huiwen-mincho';
-        src: url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huiwenmingchao-font.ttf') format('truetype'),
-             url('https://jbyedowojhbsslckgbjh.supabase.co/storage/v1/object/public/public-fonts/huimingwenchao-font.ttf') format('truetype');
-        font-weight: 700;
-        font-style: italic;
         font-display: block;
       }
       /* removed fallback font: Noto Serif SC Regular */
@@ -111,7 +78,8 @@
   "imports": {
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3"
+    "react": "https://esm.sh/react@^19.2.3",
+    "html-to-image": "https://esm.sh/html-to-image@^1.11.13"
   }
 }
 </script>
