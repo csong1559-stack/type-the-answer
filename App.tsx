@@ -29,6 +29,7 @@ const App: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showContact, setShowContact] = useState<boolean>(false);
   const [contactUrl, setContactUrl] = useState<string | undefined>(undefined);
+  const [paymentUrl, setPaymentUrl] = useState<string | undefined>(undefined);
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [exportToast, setExportToast] = useState<string | null>(null);
   
@@ -139,10 +140,13 @@ const App: React.FC = () => {
   };
   const openContact = async () => {
     try {
-      const { data } = supabase.storage.from('public-contact').getPublicUrl('wechat-contact.jpg');
-      setContactUrl(data?.publicUrl);
+      const { data: contact } = supabase.storage.from('public-contact').getPublicUrl('wechat-contact.jpg');
+      const { data: payment } = supabase.storage.from('public-contact').getPublicUrl('wechat-payment.jpg');
+      setContactUrl(contact?.publicUrl);
+      setPaymentUrl(payment?.publicUrl);
     } catch {
       setContactUrl(undefined);
+      setPaymentUrl(undefined);
     } finally {
       setShowContact(true);
     }
@@ -360,16 +364,29 @@ const App: React.FC = () => {
       </div>
       {showContact && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white p-4 rounded-none shadow-2xl w-1/2">
+          <div className="bg-white p-4 rounded-none shadow-2xl w-11/12 max-w-lg">
             <div className="flex justify-between items-center mb-3">
-              <div className="font-typewriter text-sm text-gray-700">微信联系</div>
+              <div className="font-typewriter text-sm text-gray-700">联系与支持</div>
               <button onClick={() => setShowContact(false)} className="text-gray-500 font-typewriter text-sm">关闭</button>
             </div>
-            {contactUrl ? (
-              <img src={contactUrl} alt="wechat-contact" className="w-full h-auto" />
-            ) : (
-              <div className="font-typewriter text-sm text-gray-500">未获取到联系卡片</div>
-            )}
+            <div className="flex justify-center items-center gap-6">
+              <div className="flex flex-col items-center">
+                <div className="font-typewriter text-sm text-gray-700 mb-2">想认识我的话</div>
+                {contactUrl ? (
+                  <img src={contactUrl} alt="wechat-contact" className="max-h-[33vh] w-auto" />
+                ) : (
+                  <div className="font-typewriter text-sm text-gray-500">未获取到联系卡片</div>
+                )}
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="font-typewriter text-sm text-gray-700 mb-2">想给我打钱的话</div>
+                {paymentUrl ? (
+                  <img src={paymentUrl} alt="wechat-payment" className="max-h-[33vh] w-auto" />
+                ) : (
+                  <div className="font-typewriter text-sm text-gray-500">未获取到收款码</div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
