@@ -287,6 +287,15 @@ const App: React.FC = () => {
           <QuestionsModal 
             questions={questions}
             onClose={() => setShowQuestions(false)}
+            onJump={(id) => {
+              const idx = questions.findIndex((qq) => qq.id === id);
+              if (idx >= 0) {
+                setQIndex(idx);
+                setAnswer(answersById[id] ?? '');
+              }
+              setShowQuestions(false);
+            }}
+            answeredIds={answeredIds}
             onReload={async () => {
               try {
                 const remote = await fetchQuestions();
