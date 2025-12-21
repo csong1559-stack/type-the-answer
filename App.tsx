@@ -25,13 +25,24 @@ const App: React.FC = () => {
   const [sizePreset, setSizePreset] = useState<NoteCardSize>('THREE_FOUR');
   const [showQuestions, setShowQuestions] = useState<boolean>(false);
   const [questions, setQuestions] = useState<Question[]>(QUESTIONS);
-  const [answersById, setAnswersById] = useState<Record<string, string>>({});
+  const [answersById, setAnswersById] = useState<Record<string, string>>(() => {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.ANSWER_MAPPING);
+    try {
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showContact, setShowContact] = useState<boolean>(false);
   const [contactUrl, setContactUrl] = useState<string | undefined>(undefined);
   const [paymentUrl, setPaymentUrl] = useState<string | undefined>(undefined);
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [exportToast, setExportToast] = useState<string | null>(null);
+  const [showSaveGuide, setShowSaveGuide] = useState<boolean>(false);
+  const [savePreviewUrl, setSavePreviewUrl] = useState<string | null>(null);
+  const [savePreviewList, setSavePreviewList] = useState<string[] | null>(null);
+  const [exportPageIds, setExportPageIds] = useState<string[] | null>(null);
   
   // Refs
   const cardRef = useRef<HTMLDivElement>(null);
@@ -54,6 +65,9 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEYS.APP_ROUTE, route);
   }, [route]);
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_KEYS.ANSWER_MAPPING, JSON.stringify(answersById));
+  }, [answersById]);
   useEffect(() => {
     const q = questions[qIndex];
     if (q) {
@@ -123,17 +137,75 @@ const App: React.FC = () => {
         : questions[qIndex].text.substring(0, 10).replace(/[^a-z0-9]/gi, '_');
     const filename = `YearlyNote_${new Date().getFullYear()}_${title}`;
     try {
+      // Helper to chunk array
+      const chunk = <T,>(arr: T[], size: number): T[][] => {
+        const out: T[][] = [];
+        for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+        return out;
+      };
+      // If exporting combined selection, paginate by 10 items per page
+      if (selectedIds.length > 0) {
+        const pages = chunk(selectedIds, 10);
+        const ua = navigator.userAgent;
+        const isIOS = /iPhone|iPad|iPod/i.test(ua);
+        const pageResults: { dataUrl: string; fileName: string; blob: Blob }[] = [];
+        for (let i = 0; i < pages.length; i++) {
+          setExportPageIds(pages[i]);
+          await new Promise((r) => requestAnimationFrame(r));
+          await new Promise((r) => setTimeout(r, 0));
+          if (!exportStagingRef.current) break;
+          const pageName = `${filename}_p${i + 1}`;
+          const res = await exportToPNG(exportStagingRef.current, pageName);
+          pageResults.push(res);
+        }
+        setExportPageIds(null);
+        if (isIOS) {
+          setSavePreviewList(pageResults.map((r) => r.dataUrl));
+          setShowSaveGuide(true);
+          setExportToast(`已生成 ${pageResults.length} 张，长按图片保存`);
+          setTimeout(() => setExportToast(null), 2500);
+        } else {
+          for (const r of pageResults) {
+            const objectUrl = URL.createObjectURL(r.blob);
+            const link = document.createElement('a');
+            link.download = r.fileName;
+            link.href = objectUrl;
+            link.target = '_self';
+            link.rel = 'noopener';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+          }
+          setExportToast(`已下载 ${pageResults.length} 张图片`);
+          setTimeout(() => setExportToast(null), 2000);
+        }
+        return;
+      }
+      // Single card export
       const result = await exportToPNG(nodeToExport, filename);
-      const objectUrl = URL.createObjectURL(result.blob);
-      const link = document.createElement('a');
-      link.download = result.fileName;
-      link.href = objectUrl;
-      link.target = '_self';
-      link.rel = 'noopener';
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
-      setExportToast('图片已下载');
-      setTimeout(() => setExportToast(null), 2000);
+      const ua = navigator.userAgent;
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+      const isWeChat = /MicroMessenger/i.test(ua);
+      if (isIOS) {
+        setSavePreviewUrl(result.dataUrl);
+        setShowSaveGuide(true);
+        setExportToast('长按图片保存到相册');
+        setTimeout(() => setExportToast(null), 2000);
+      } else {
+        const objectUrl = URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.download = result.fileName;
+        link.href = objectUrl;
+        link.target = '_self';
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+        setExportToast('图片已下载');
+        setTimeout(() => setExportToast(null), 2000);
+      }
     } finally {
       setIsExporting(false);
     }
@@ -153,6 +225,7 @@ const App: React.FC = () => {
   };
   
   const compositeRef = useRef<HTMLDivElement | null>(null);
+  const exportStagingRef = useRef<HTMLDivElement | null>(null);
   const answeredIds = Object.entries(answersById)
     .filter(([, v]) => typeof v === 'string' && v.trim().length > 0)
     .map(([id]) => id);
@@ -229,7 +302,7 @@ const App: React.FC = () => {
 
       
 
-      {/* Bottom Action Bar (Styled like Typewriter Keys/Body) */}
+      {/* Bottom Action Bar */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md p-4 pb-safe grid grid-cols-3 items-center gap-4 z-40">
         <button 
           onClick={handlePrevQuestion} 
@@ -240,7 +313,7 @@ const App: React.FC = () => {
         <button 
           onClick={() => setRoute('EXPORT')}
           disabled={answeredIds.length === 0}
-          className="justify-self-center font-typewriter text-sm text-gray-500 uppercase tracking-widest px-4 py-3 bg-transparent border border-transparent transition-all disabled:opacity-40"
+          className="justify-self-center font-typewriter text-sm text-gray-500 uppercase tracking-widest px-4 py-3 bg-transparent border border-transparent transition-all disabled:text-transparent disabled:opacity-100"
         >
           回答完毕
         </button>
@@ -267,7 +340,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Preview Area */}
-      <div className="flex-1 p-6 bg-gray-200/50 overflow-y-auto">
+      <div className="flex-1 p-6 bg-gray-200/50 overflow-y-auto pb-32">
         {selectedIds.length > 0 ? (
           <div
             ref={compositeRef}
@@ -325,7 +398,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Bottom Drawer */}
-      <div className="bg-white border-t border-gray-200 p-6 pb-safe space-y-6 z-30">
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white border-t border-gray-200 p-6 pb-[env(safe-area-inset-bottom)] space-y-6 z-50">
         
 
         {/* Select questions to export */}
@@ -390,6 +463,51 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Offscreen export staging for pagination */}
+      {exportPageIds && (
+        <div className="fixed -top-[9999px] left-0 w-full">
+          <div
+            ref={exportStagingRef}
+            className="relative bg-paper text-gray-900 flex flex-col p-10 sm:p-14 shadow-2xl font-typewriter"
+            style={{ boxSizing: 'border-box' }}
+          >
+            <div className="w-full max-w-[62ch] mx-auto">
+              <div className="flex justify-between items-end border-b-4 border-gray-800 pb-6 mb-10">
+                <div className="flex flex-col">
+                  <span className="font-typewriter text-2xl sm:text-3xl font-normal text-gray-800">
+                    年度40问
+                  </span>
+                </div>
+              </div>
+              <div className="flex-1 flex flex-col space-y-10">
+                {exportPageIds.map((id) => {
+                  const q = questions.find((qq) => qq.id === id);
+                  if (!q) return null;
+                  const ans = answersById[id] ?? '';
+                  return (
+                    <div key={id} className="relative">
+                      <div className="mb-4">
+                        <p className="font-typewriter text-gray-500 text-sm sm:text-base not-italic">
+                          问：{q.text}
+                        </p>
+                      </div>
+                      <p className="font-typewriter text-lg sm:text-xl md:text-2xl leading-loose whitespace-pre-wrap text-gray-900 font-normal">
+                        {ans}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-12 pt-6 border-t border-gray-300 flex justify-between items-center opacity-60">
+                <span className="font-typewriter text-xs text-gray-500">Type the Answer</span>
+                <span className="font-typewriter text-xs text-gray-400">
+                  {new Date().toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {isExporting && (
         <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center">
           <div className="bg-white px-4 py-3 shadow font-typewriter text-sm text-gray-700 flex items-center gap-2">
@@ -401,6 +519,28 @@ const App: React.FC = () => {
       {exportToast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-gray-900 text-white px-4 py-2 rounded-none shadow font-typewriter text-sm">
           {exportToast}
+        </div>
+      )}
+      {showSaveGuide && (
+        <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center">
+          <div className="bg-white p-4 w-11/12 max-w-lg shadow-2xl">
+            <div className="font-typewriter text-sm text-gray-700 mb-2">长按图片并选择“保存图片”</div>
+            {savePreviewList ? (
+              <div className="grid grid-cols-1 gap-3 max-h-[75vh] overflow-y-auto no-scrollbar">
+                {savePreviewList.map((url, idx) => (
+                  <div key={idx} className="flex flex-col">
+                    <div className="font-typewriter text-xs text-gray-500 mb-1">第 {idx + 1} 张</div>
+                    <img src={url} alt={`preview-${idx + 1}`} className="w-full h-auto" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              savePreviewUrl && <img src={savePreviewUrl} alt="save-preview" className="w-full h-auto" />
+            )}
+            <div className="mt-3 flex justify-end">
+              <button onClick={() => { setShowSaveGuide(false); setSavePreviewList(null); setSavePreviewUrl(null); }} className="font-typewriter text-sm text-gray-600">关闭</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

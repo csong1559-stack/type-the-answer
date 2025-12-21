@@ -10,6 +10,7 @@ export const LOCAL_STORAGE_KEYS = {
   MUTE_PREF: 'yearly_typewriter_muted',
   ANSWER_DRAFT: 'yearly_typewriter_draft',
   APP_ROUTE: 'yearly_typewriter_route',
+  ANSWER_MAPPING: 'yearly_typewriter_answer_mapping',
 };
 
 export const PAPER_TEXTURE_URL =
