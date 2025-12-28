@@ -11,6 +11,7 @@ export const LOCAL_STORAGE_KEYS = {
   ANSWER_DRAFT: 'yearly_typewriter_draft',
   APP_ROUTE: 'yearly_typewriter_route',
   ANSWER_MAPPING: 'yearly_typewriter_answer_mapping',
+  QUESTION_SET: 'yearly_typewriter_question_set',
 };
 
 export const PAPER_TEXTURE_URL =

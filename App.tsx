@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { QUESTIONS } from './data/questions';
+import { QUESTIONS, QUESTIONS_CG34 } from './data/questions';
 import { Question, AppRoute, NoteCardSize } from './types';
 import { LOCAL_STORAGE_KEYS, CARD_DIMENSIONS } from './constants';
 import { useAudioSfx } from './hooks/useAudioSfx';
@@ -33,6 +33,11 @@ const App: React.FC = () => {
       return {};
     }
   });
+  const [questionSet, setQuestionSet] = useState<'steph40' | 'cg34'>(() => {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.QUESTION_SET) as 'steph40' | 'cg34' | null;
+    return saved === 'cg34' ? 'cg34' : 'steph40';
+  });
+  const [showPicker, setShowPicker] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showContact, setShowContact] = useState<boolean>(false);
   const [contactUrl, setContactUrl] = useState<string | undefined>(undefined);
@@ -69,14 +74,18 @@ const App: React.FC = () => {
     localStorage.setItem(LOCAL_STORAGE_KEYS.ANSWER_MAPPING, JSON.stringify(answersById));
   }, [answersById]);
   useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_KEYS.QUESTION_SET, questionSet);
+  }, [questionSet]);
+  useEffect(() => {
     const q = questions[qIndex];
     if (q) {
       setAnswersById((prev) => {
-        if (prev[q.id] === answer) return prev;
-        return { ...prev, [q.id]: answer };
+        const key = `${questionSet}:${q.id}`;
+        if (prev[key] === answer) return prev;
+        return { ...prev, [key]: answer };
       });
     }
-  }, [answer, qIndex, questions]);
+  }, [answer, qIndex, questions, questionSet]);
 
   useEffect(() => {
     (async () => {
@@ -103,25 +112,22 @@ const App: React.FC = () => {
   // --- Handlers ---
   const handleStart = async () => {
     await unlockAudio();
-    // Pick random question if fresh start, otherwise keep 0
-    const randomIndex = Math.floor(Math.random() * questions.length);
-    setQIndex(randomIndex);
-    const nextId = questions[randomIndex]?.id;
-    setAnswer(nextId ? (answersById[nextId] ?? '') : '');
-    setRoute('EDITOR');
+    setShowPicker(true);
   };
 
   const handleNextQuestion = () => {
     const next = (qIndex + 1) % questions.length;
     setQIndex(next);
     const nextId = questions[next]?.id;
-    setAnswer(nextId ? (answersById[nextId] ?? '') : '');
+    const key = nextId ? `${questionSet}:${nextId}` : null;
+    setAnswer(key ? (answersById[key] ?? '') : '');
   };
   const handlePrevQuestion = () => {
     const prev = (qIndex - 1 + questions.length) % questions.length;
     setQIndex(prev);
     const prevId = questions[prev]?.id;
-    setAnswer(prevId ? (answersById[prevId] ?? '') : '');
+    const key = prevId ? `${questionSet}:${prevId}` : null;
+    setAnswer(key ? (answersById[key] ?? '') : '');
   };
 
   const toggleMute = () => setIsMuted(!isMuted);
@@ -227,8 +233,8 @@ const App: React.FC = () => {
   const compositeRef = useRef<HTMLDivElement | null>(null);
   const exportStagingRef = useRef<HTMLDivElement | null>(null);
   const answeredIds = Object.entries(answersById)
-    .filter(([, v]) => typeof v === 'string' && v.trim().length > 0)
-    .map(([id]) => id);
+    .filter(([k, v]) => k.startsWith(`${questionSet}:`) && typeof v === 'string' && v.trim().length > 0)
+    .map(([k]) => k.split(':')[1]);
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
@@ -282,6 +288,8 @@ const App: React.FC = () => {
           isMuted={isMuted} 
           questionText={currentQuestion.text}
           onShowAllQuestions={() => setShowQuestions(true)}
+          onShowPicker={() => setShowPicker(true)}
+          questionSetLabel={questionSet === 'cg34' ? '年度34问（@聪明盖）' : '年度40问（@Steph Ango）'}
         />
         {showQuestions && (
           <QuestionsModal 
@@ -291,7 +299,8 @@ const App: React.FC = () => {
               const idx = questions.findIndex((qq) => qq.id === id);
               if (idx >= 0) {
                 setQIndex(idx);
-                setAnswer(answersById[id] ?? '');
+                const key = `${questionSet}:${id}`;
+                setAnswer(answersById[key] ?? '');
               }
               setShowQuestions(false);
             }}
@@ -306,6 +315,52 @@ const App: React.FC = () => {
               } catch {}
             }}
           />
+        )}
+        {showPicker && (
+          <div onClick={() => setShowPicker(false)} className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+            <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm shadow-2xl">
+              <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
+                <span className="font-typewriter text-sm text-gray-700">选择问卷</span>
+                <button onClick={() => setShowPicker(false)} className="font-typewriter text-sm text-gray-500">×</button>
+              </div>
+              <div className="p-4 space-y-3">
+                <button
+                  className="w-full text-left font-typewriter text-sm text-gray-800 px-2 py-2 hover:text-gray-900"
+                  onClick={() => {
+                    const next = QUESTIONS;
+                    setQuestionSet('steph40');
+                    setQuestions(next);
+                    setQIndex(0);
+                    const firstId = next[0]?.id;
+                    const key = firstId ? `steph40:${firstId}` : null;
+                    setAnswer(key ? (answersById[key] ?? '') : '');
+                    setShowPicker(false);
+                    setShowQuestions(false);
+                    setRoute('EDITOR');
+                  }}
+                >
+                  年度40问（@Steph Ango）
+                </button>
+                <button
+                  className="w-full text-left font-typewriter text-sm text-gray-800 px-2 py-2 hover:text-gray-900"
+                  onClick={() => {
+                    const next = QUESTIONS_CG34;
+                    setQuestionSet('cg34');
+                    setQuestions(next);
+                    setQIndex(0);
+                    const firstId = next[0]?.id;
+                    const key = firstId ? `cg34:${firstId}` : null;
+                    setAnswer(key ? (answersById[key] ?? '') : '');
+                    setShowPicker(false);
+                    setShowQuestions(false);
+                    setRoute('EDITOR');
+                  }}
+                >
+                  年度34问（@聪明盖）
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -560,6 +615,50 @@ const App: React.FC = () => {
       {route === 'HOME' && renderHome()}
       {route === 'EDITOR' && renderEditor()}
       {route === 'EXPORT' && renderExport()}
+      {route === 'HOME' && showPicker && (
+        <div onClick={() => setShowPicker(false)} className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm shadow-2xl">
+            <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
+              <span className="font-typewriter text-sm text-gray-700">选择问卷</span>
+              <button onClick={() => setShowPicker(false)} className="font-typewriter text-sm text-gray-500">×</button>
+            </div>
+            <div className="p-4 space-y-3">
+              <button
+                className="w-full text-left font-typewriter text-sm text-gray-800 px-2 py-2 hover:text-gray-900"
+                onClick={() => {
+                  const next = QUESTIONS;
+                  setQuestionSet('steph40');
+                  setQuestions(next);
+                  setQIndex(0);
+                  const firstId = next[0]?.id;
+                  const key = firstId ? `steph40:${firstId}` : null;
+                  setAnswer(key ? (answersById[key] ?? '') : '');
+                  setShowPicker(false);
+                  setRoute('EDITOR');
+                }}
+              >
+                年度40问（@Steph Ango）
+              </button>
+              <button
+                className="w-full text-left font-typewriter text-sm text-gray-800 px-2 py-2 hover:text-gray-900"
+                onClick={() => {
+                  const next = QUESTIONS_CG34;
+                  setQuestionSet('cg34');
+                  setQuestions(next);
+                  setQIndex(0);
+                  const firstId = next[0]?.id;
+                  const key = firstId ? `cg34:${firstId}` : null;
+                  setAnswer(key ? (answersById[key] ?? '') : '');
+                  setShowPicker(false);
+                  setRoute('EDITOR');
+                }}
+              >
+                年度34问（@聪明盖）
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,6 +8,8 @@ interface TypewriterStageProps {
   isMuted: boolean;
   questionText: string;
   onShowAllQuestions: () => void;
+  onShowPicker: () => void;
+  questionSetLabel: string;
 }
 
 export const TypewriterStage: React.FC<TypewriterStageProps> = ({ 
@@ -15,7 +17,9 @@ export const TypewriterStage: React.FC<TypewriterStageProps> = ({
   setText, 
   isMuted,
   questionText,
-  onShowAllQuestions
+  onShowAllQuestions,
+  onShowPicker,
+  questionSetLabel
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { playKeySound, playEnterSound, playBackspaceSound } = useAudioSfx(isMuted);
@@ -89,7 +93,14 @@ export const TypewriterStage: React.FC<TypewriterStageProps> = ({
       >
         
         <div className="mb-6 pb-4 border-b-2 border-gray-300/50 relative z-20">
-          <button onClick={onShowAllQuestions} className="font-typewriter text-xs text-gray-500 mb-2 underline decoration-dotted">年度40问</button>
+          <div className="flex items-center justify-between">
+            <button onClick={onShowAllQuestions} className="font-typewriter text-xs text-gray-500 underline decoration-dotted">
+              {questionSetLabel}
+            </button>
+            <button onClick={onShowPicker} className="font-typewriter text-xs text-gray-500 underline decoration-dotted">
+              换个问卷
+            </button>
+          </div>
           <p className="text-lg font-typewriter text-gray-700 leading-relaxed font-bold whitespace-pre-wrap">
             {typedQuestion}
           </p>
