@@ -8,6 +8,7 @@ export const QuestionsModal = ({
   onReload,
   onJump,
   answeredIds,
+  title,
 }: {
   questions: Question[];
   onClose: () => void;
@@ -15,12 +16,13 @@ export const QuestionsModal = ({
   onReload?: () => void;
   onJump?: (id: string) => void;
   answeredIds?: string[];
+  title?: string;
 }) => {
   return (
     <div onClick={onClose} className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
       <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-lg max-h-[80vh] overflow-y-auto no-scrollbar shadow-2xl">
         <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
-          <span className="font-typewriter text-sm text-gray-700">年度40问</span>
+          <span className="font-typewriter text-sm text-gray-700">{title}</span>
           <button onClick={onClose} aria-label="关闭" className="font-typewriter text-sm text-gray-500">×</button>
         </div>
         <div className="p-4 space-y-3">

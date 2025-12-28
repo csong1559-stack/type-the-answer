@@ -102,11 +102,11 @@ const App: React.FC = () => {
   useEffect(() => {
     if (route === 'EXPORT') {
       const answered = Object.entries(answersById)
-        .filter(([, v]) => typeof v === 'string' && v.trim().length > 0)
-        .map(([id]) => id);
+        .filter(([k, v]) => k.startsWith(`${questionSet}:`) && typeof v === 'string' && v.trim().length > 0)
+        .map(([k]) => k.split(':')[1]);
       setSelectedIds(answered);
     }
-  }, [route, answersById]);
+  }, [route, answersById, questionSet]);
   
 
   // --- Handlers ---
@@ -235,6 +235,7 @@ const App: React.FC = () => {
   const answeredIds = Object.entries(answersById)
     .filter(([k, v]) => k.startsWith(`${questionSet}:`) && typeof v === 'string' && v.trim().length > 0)
     .map(([k]) => k.split(':')[1]);
+  const questionSetLabel = questionSet === 'cg34' ? '年度34问（@聪明盖）' : '年度40问（@Steph Ango）';
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
@@ -288,13 +289,13 @@ const App: React.FC = () => {
           isMuted={isMuted} 
           questionText={currentQuestion.text}
           onShowAllQuestions={() => setShowQuestions(true)}
-          onShowPicker={() => setShowPicker(true)}
-          questionSetLabel={questionSet === 'cg34' ? '年度34问（@聪明盖）' : '年度40问（@Steph Ango）'}
+          questionSetLabel={questionSetLabel}
         />
         {showQuestions && (
           <QuestionsModal 
             questions={questions}
             onClose={() => setShowQuestions(false)}
+            title={questionSetLabel}
             onJump={(id) => {
               const idx = questions.findIndex((qq) => qq.id === id);
               if (idx >= 0) {
@@ -412,20 +413,20 @@ const App: React.FC = () => {
             style={{ boxSizing: 'border-box' }}
           >
             <div className="w-full max-w-[62ch] mx-auto">
-              <div className="flex justify-between items-end border-b-4 border-gray-800 pb-6 mb-10">
-                <div className="flex flex-col">
-                  <span className="font-typewriter text-xs sm:text-sm uppercase tracking-[0.2em] text-gray-500 mb-1">
-                  </span>
-                  <span className="font-typewriter text-2xl sm:text-3xl font-normal text-gray-800">
-                    年度40问
-                  </span>
+                <div className="flex justify-between items-end border-b-4 border-gray-800 pb-6 mb-10">
+                  <div className="flex flex-col">
+                    <span className="font-typewriter text-xs sm:text-sm uppercase tracking-[0.2em] text-gray-500 mb-1">
+                    </span>
+                    <span className="font-typewriter text-2xl sm:text-3xl font-normal text-gray-800">
+                    {questionSetLabel}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1 flex flex-col space-y-10">
-                {selectedIds.map((id) => {
+                <div className="flex-1 flex flex-col space-y-10">
+                  {selectedIds.map((id) => {
                   const q = questions.find((qq) => qq.id === id);
                   if (!q) return null;
-                  const ans = answersById[id] ?? '';
+                  const ans = answersById[`${questionSet}:${id}`] ?? '';
                   return (
                     <div key={id} className="relative">
                       <div className="mb-4">
@@ -454,7 +455,7 @@ const App: React.FC = () => {
               ref={cardRef}
               question={currentQuestion}
               answer={answer}
-              title={'年度40问'}
+              title={questionSetLabel}
               size={sizePreset}
             />
           </div>
@@ -547,7 +548,7 @@ const App: React.FC = () => {
                 {exportPageIds.map((id) => {
                   const q = questions.find((qq) => qq.id === id);
                   if (!q) return null;
-                  const ans = answersById[id] ?? '';
+                  const ans = answersById[`${questionSet}:${id}`] ?? '';
                   return (
                     <div key={id} className="relative">
                       <div className="mb-4">

@@ -8,7 +8,6 @@ interface TypewriterStageProps {
   isMuted: boolean;
   questionText: string;
   onShowAllQuestions: () => void;
-  onShowPicker: () => void;
   questionSetLabel: string;
 }
 
@@ -18,7 +17,6 @@ export const TypewriterStage: React.FC<TypewriterStageProps> = ({
   isMuted,
   questionText,
   onShowAllQuestions,
-  onShowPicker,
   questionSetLabel
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -96,9 +94,6 @@ export const TypewriterStage: React.FC<TypewriterStageProps> = ({
           <div className="flex items-center justify-between">
             <button onClick={onShowAllQuestions} className="font-typewriter text-xs text-gray-500 underline decoration-dotted">
               {questionSetLabel}
-            </button>
-            <button onClick={onShowPicker} className="font-typewriter text-xs text-gray-500 underline decoration-dotted">
-              换个问卷
             </button>
           </div>
           <p className="text-lg font-typewriter text-gray-700 leading-relaxed font-bold whitespace-pre-wrap">
